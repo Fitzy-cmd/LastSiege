@@ -9,7 +9,7 @@ pygame.display.set_caption('Shooter')
 #set framerate
 clock = pygame.time.Clock()
 FPS_OPTIONS = [30,60,100,144,165]
-FPS = FPS_OPTIONS[1]
+FPS = FPS_OPTIONS[0]
 
 #define game variables
 GRAVITY = 0.75
