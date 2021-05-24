@@ -8,7 +8,8 @@ pygame.display.set_caption('Shooter')
 
 #set framerate
 clock = pygame.time.Clock()
-FPS = 30
+FPS_OPTIONS = [30,60,100,144,165]
+FPS = FPS_OPTIONS[1]
 
 #define game variables
 GRAVITY = 0.75
@@ -17,7 +18,7 @@ ROWS = 16
 COLS = 150
 TILE_SIZE = SCREEN_HEIGHT // ROWS
 TILE_TYPES = 21
-MAX_LEVELS = 1
+MAX_LEVELS = 2
 screen_scroll = 0
 bg_scroll = 0
 level = 1
@@ -36,6 +37,8 @@ timerStarted = False
 startTime = 0
 endTime = 0
 score = 0
+ammo = 20
+grenades = 9
 
 
 #define player action variables

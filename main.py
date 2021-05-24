@@ -53,6 +53,7 @@ item_boxes = {
     'Ammo'		: ammo_box_img,
     'Grenade'	: grenade_box_img
 }
+logo = pygame.image.load('img/icons/logo.png').convert_alpha()
 
 endimg = pygame.image.load('img/endScreen.png').convert_alpha()
 
@@ -70,8 +71,6 @@ font = pygame.font.SysFont('Futura', 30)
 font2 = pygame.font.SysFont('Futura', 17)
 font3 = pygame.font.SysFont('Futura', 12)
 font4 = pygame.font.SysFont('Futura', 50)
-
-
 
 def draw_text(text, font, text_col, x, y):
     global screen
@@ -273,32 +272,35 @@ class Player(pygame.sprite.Sprite):
             bullet_group.add(bullet)
             #reduce ammo
             self.ammo -= 1
+            settings.ammo -= 1
             shot_fx.play()
 
             pygame.time.wait(100)
-
-            bullet = Bullet(self.rect.centerx + (0.75 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
-            bullet_group.add(bullet)
-            #reduce ammo
-            self.ammo -= 1
-            shot_fx.play()
+            if self.ammo > 0:
+                bullet = Bullet(self.rect.centerx + (0.75 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
+                bullet_group.add(bullet)
+                #reduce ammo
+                self.ammo -= 1
+                settings.ammo -= 1
+                shot_fx.play()
 
             pygame.time.wait(100)
-
-            bullet = Bullet(self.rect.centerx + (0.75 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
-            bullet_group.add(bullet)
-            #reduce ammo
-            self.ammo -= 1
-            shot_fx.play()
+            if self.ammo > 0:
+                bullet = Bullet(self.rect.centerx + (0.75 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
+                bullet_group.add(bullet)
+                #reduce ammo
+                self.ammo -= 1
+                settings.ammo -= 1
+                shot_fx.play()
 
     def auto(self):
-        print("auto")
         if self.shoot_cooldown == 0 and self.ammo > 0:  
             self.shoot_cooldown = 3
             bullet = Bullet(self.rect.centerx + (0.75 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
             bullet_group.add(bullet)
             #reduce ammo
             self.ammo -= 1
+            settings.ammo -= 1
             shot_fx.play()
 
     def ai(self):
@@ -383,7 +385,7 @@ class World():
     def process_data(self, data):
         self.level_length = len(data[0])
 
-        #iterate through each value in level data file
+        #iterate through each value in settings.leveldata file
         for y, row in enumerate(data):
             for x, tile in enumerate(row):
                 if tile >= 0:
@@ -401,7 +403,7 @@ class World():
                         decoration = Decoration(img, x * TILE_SIZE, y * TILE_SIZE)
                         decoration_group.add(decoration)
                     elif tile == 15:#create player
-                        player = Player('player', x * TILE_SIZE, y * TILE_SIZE, 1.65, 5, 20, 6)
+                        player = Player('player', x * TILE_SIZE, y * TILE_SIZE, 1.65, 5, settings.ammo, settings.grenades)
                         health_bar = HealthBar(10, 10, player.health, player.health)
                     elif tile == 16:#create enemies
                         enemy = Player('enemy', x * TILE_SIZE, y * TILE_SIZE, 1.65, 2, 20, 0)
@@ -485,9 +487,11 @@ class ItemBox(pygame.sprite.Sprite):
                     settings.itemBoxesGained += 1
             elif self.item_type == 'Ammo':
                 player.ammo += 15
+                settings.ammo += 15
                 settings.itemBoxesGained += 1
             elif self.item_type == 'Grenade':
                 player.grenades += 3
+                settings.grenades += 3
                 settings.itemBoxesGained += 1
             #delete the item box
             self.kill()
@@ -512,7 +516,6 @@ class HealthBar():
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
-        
         pygame.sprite.Sprite.__init__(self)
         self.speed = 10
         self.image = bullet_img
@@ -536,7 +539,6 @@ class Bullet(pygame.sprite.Sprite):
         if pygame.sprite.spritecollide(player, bullet_group, False):
             if player.alive:
                 player.health -= 5
-                settings.score -= 5
                 settings.damageTaken -= 5
                 self.kill()
         for enemy in enemy_group:
@@ -605,7 +607,6 @@ class Grenade(pygame.sprite.Sprite):
             if abs(self.rect.centerx - player.rect.centerx) < TILE_SIZE * 2 and \
                 abs(self.rect.centery - player.rect.centery) < TILE_SIZE * 2:
                 player.health -= 50
-                settings.score -= 50
                 settings.damageTaken -= 50
             for enemy in enemy_group:
                 if abs(self.rect.centerx - enemy.rect.centerx) < TILE_SIZE * 2 and \
@@ -657,7 +658,7 @@ class ScreenFade():
         
         self.direction = direction
         self.colour = colour
-        self.speed = speed
+        self.speed = speed * 2
         self.fade_counter = 0
 
 
@@ -792,7 +793,6 @@ class changeFiringModes():
     
     def changeFiringMode():
         settings.activeFiringMode = settings.firingModes[settings.firingModeCounter]
-        print(settings.activeFiringMode)
 
 #create screen fades
 intro_fade = ScreenFade(1, BLACK, 4)
@@ -806,6 +806,8 @@ exit_button = button.Button(SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 50, ex
 exit_button2 = button.Button(SCREEN_WIDTH // 2 + 110, SCREEN_HEIGHT // 2 + 190, exit_img, 1)
 restart_button = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50, restart_img, 2)
 achievements_button = button.Button(SCREEN_WIDTH // 2 - 215, SCREEN_HEIGHT // 2 + 250, achieve_img, 2)
+restart_button_endscreen = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 200, restart_img, 2)
+
 
 #create sprite groups
 enemy_group = pygame.sprite.Group()
@@ -825,8 +827,8 @@ for row in range(ROWS):
     r = [-1] * COLS
     world_data.append(r)
     
-#load in level data and create world
-with open(f'level{level}_data.csv', newline='') as csvfile:
+#load in settings.leveldata and create world
+with open(f'level{settings.level}_data.csv', newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
     for x, row in enumerate(reader):
         for y, tile in enumerate(row):
@@ -848,14 +850,20 @@ while run:
         #add buttons
         a.optionsAchievementCheck()
         if achievementMenu == False:
+            screen.blit(logo, (100, 15))
+            draw_text("Controls", font2, WHITE, 20, 450)
+            draw_text("Movement: Arrow Keys or WASD", font3, WHITE, 20, 470)
+            draw_text("Fire Gun: F Key", font3, WHITE, 20, 490)
+            draw_text("Throw Grenade: Q Key", font3, WHITE, 20, 510)
+            settings.level = 1
             if start_button.draw(screen):
                 start_game = True
                 start_intro = True
+                
             if exit_button.draw(screen):
                 run = False
             if achievements_button.draw(screen):
                 achievementMenu = True
-                
         else:
             a.draw()
             for event in pygame.event.get():
@@ -873,6 +881,9 @@ while run:
         if not settings.timerStarted and settings.startTime == 0:
             settings.startTime = time.time()
             settings.timerStarted = True
+            settings.ammo = player.ammo
+            settings.grenades = player.grenades
+            settings.level = 1
         #update background
         draw_bg()
         #draw world map
@@ -880,11 +891,11 @@ while run:
         #show player health
         health_bar.draw(player.health)
         #show ammo
-        draw_text('AMMO: ', font, WHITE, 10, 35)
+        draw_text('AMMO: ', font2, WHITE, 10, 35)
         for x in range(player.ammo):
             screen.blit(bullet_img, (90 + (x * 10), 40))
         #show grenades
-        draw_text('GRENADES: ', font, WHITE, 10, 60)
+        draw_text('GRENADES: ', font2, WHITE, 10, 60)
         for x in range(player.grenades):
             screen.blit(grenade_img, (135 + (x * 15), 60))
 
@@ -896,6 +907,7 @@ while run:
             enemy.ai()
             enemy.update()
             enemy.draw()
+            
 
         #update and draw groups
         bullet_group.update()
@@ -914,7 +926,7 @@ while run:
         exit_group.draw(screen)
 
         if settings.firingModesOn:
-            draw_text(settings.activeFiringMode, font, WHITE, 625, 10)
+            draw_text(settings.activeFiringMode, font2, WHITE, 625, 10)
 
         if not setup: ##level-specific one-time events
             settings.enemyCounter = len(enemy_group)
@@ -932,10 +944,12 @@ while run:
             #shoot bullets
             if shoot:
                 player.shoot(settings.activeFiringMode)
-            #throw grenades
+            #throw grenade
             elif grenade and grenade_thrown == False and player.grenades > 0:
                 grenade = Grenade(player.rect.centerx + (0.5 * player.rect.size[0] * player.direction),\
                              player.rect.top, player.direction)
+                settings.grenadesThrown += 1
+                settings.grenades -= 1
                 grenade_group.add(grenade)
                 #reduce grenades
                 player.grenades -= 1
@@ -949,21 +963,22 @@ while run:
             screen_scroll, level_complete = player.move(moving_left, moving_right)
             bg_scroll -= screen_scroll
 
+
             #check if player has completed the level
             if level_complete:
-                
-                if MAX_LEVELS == level:
+                if MAX_LEVELS == settings.level:
                     settings.gameCompleted = True
                 if not settings.gameCompleted:
                     a.endLevelAchievementCheck()
                     start_intro = True
                     setup = False
-                    level += 1
+                    settings.level += 1
+                    print(settings.level)
                     bg_scroll = 0
                     world_data = reset_level()
-                    if level <= settings.MAX_LEVELS:
-                        #load in level data and create world
-                        with open(f'level{level}_data.csv', newline='') as csvfile:
+                    if settings.level <= settings.MAX_LEVELS:
+                        #load in settings.leveldata and create world
+                        with open(f'level{settings.level}_data.csv', newline='') as csvfile:
                             reader = csv.reader(csvfile, delimiter=',')
                             for x, row in enumerate(reader):
                                 for y, tile in enumerate(row):
@@ -973,24 +988,42 @@ while run:
                 else:
                     a.endGameAchievementCheck()
                     a.endLevelAchievementCheck()
+                    player.speed = 0
 
                     screen.blit(endimg, (0,0))
-                    draw_text("Congratulations!", font4, WHITE, 250, 50)
+                    draw_text("Congratulations!", font4, WHITE, 235, 50)
 
                     if settings.timerStarted and settings.endTime == 0:
                         settings.timerStarted = False
                         settings.endTime = time.time()
+                        unalteredScore = settings.score
                         settings.score += player.health * 5
                         settings.score += player.ammo * 2
                         settings.score += player.grenades * 30
                     
                     settings.timeCompleted = settings.endTime - settings.startTime
-                    draw_text("You completed the game in", font, WHITE, 265, 100)
-                    draw_text(str(round(settings.timeCompleted, 2)) + " seconds", font4, WHITE, 285, 130)
-                    draw_text("with a total score of", font, WHITE, 290, 200)
-                    draw_text(str(settings.score) + " points", font4, WHITE, 300, 250)
-                    draw_text(f"with +{player.health * 5}pts from your leftover health, +{player.ammo * 2}pts from your leftover ammo and +{player.grenades * 30}pts from your leftover grenades", font2, WHITE, 100, 300)
-        
+                    draw_text("You completed the game in", font, WHITE, 240, 120)
+                    draw_text(str(round(settings.timeCompleted, 2)) + " seconds", font4, WHITE, 275, 160)
+                    draw_text("with a total score of", font, WHITE, 290, 250)
+                    draw_text(str(settings.score + 500) + " points", font4, WHITE, 300, 290)
+                    score_text = f"+{unalteredScore + 500} normal points scored"
+                    score_text1 = f"+{player.health * 5}pts bonus from your leftover health"
+                    score_text2 = f"+{player.ammo * 2}pts bonus from your leftover ammo"
+                    score_text3 = f"+{player.grenades * 30}pts bonus from your leftover grenades"
+                    draw_text(score_text, font2, WHITE, 280, 360)
+                    draw_text(score_text1, font2, WHITE, 280, 380)
+                    draw_text(score_text2, font2, WHITE, 280, 400)
+                    draw_text(score_text3, font2, WHITE, 280, 420)
+                    if restart_button_endscreen.draw(screen):
+                        print("restarting...")
+                        level_complete = False
+                        start_intro = False
+                        start_game = False
+                        settings.score = 0
+                        setup = False
+                        settings.timerStarted = False
+                        settings.gameCompleted = False
+                        settings.level = 1
         
         
         
@@ -999,17 +1032,22 @@ while run:
             if death_fade.fade():
 
                 if restart_button.draw(screen):
+                    ##Reset game
                     death_fade.fade_counter = 0
                     start_intro = True
                     bg_scroll = 0
+                    settings.level = 1
                     world_data = reset_level()
-                    #load in level data and create world
-                    with open(f'level{level}_data.csv', newline='') as csvfile:
+                    #load in settings.leveldata and create world
+                    with open(f'level1_data.csv', newline='') as csvfile:
                         reader = csv.reader(csvfile, delimiter=',')
                         for x, row in enumerate(reader):
                             for y, tile in enumerate(row):
                                 world_data[x][y] = int(tile)
                     world = World()
+                    settings.ammo = 20
+                    settings.grenades = 6
+                    settings.startTime = time.time()
                     player, health_bar = world.process_data(world_data)
 
 
@@ -1017,51 +1055,48 @@ while run:
         #quit game
         if event.type == pygame.QUIT:
             run = False
-        #keyboard presses
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                moving_left = True
-            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                moving_right = True
-            if event.key == pygame.K_f:
-                if start_game == True: #done to make sure that no keys pressed before game starts account towards firing shots, as well as preventing shots fired from enemies counting towards this variable
-                    settings.shotsFired += 1
-                    if settings.activeFiringMode == "Automatic":
-                        settings.automaticMode = True
-                shoot = True
-            if event.key == pygame.K_q:
-                if start_game == True:
-                    settings.grenadesThrown += 1
-                grenade = True
-            if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP:
-                player.jump = True
-                jump_fx.play()
-            if event.key == pygame.K_ESCAPE:
-                run = False
-            if event.key == pygame.K_v and settings.firingModesOn:
-                changeFiringModes.getCurrentFiringMode()
+        if not settings.gameCompleted:
+            #keyboard presses
+            if event.type == pygame.KEYDOWN:
+                if player.alive:
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                        moving_left = True
+                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                        moving_right = True
+                    if event.key == pygame.K_f:
+                        if start_game == True: #done to make sure that no keys pressed before game starts account towards firing shots, as well as preventing shots fired from enemies counting towards this variable
+                            settings.shotsFired += 1
+                            if settings.activeFiringMode == "Automatic":
+                                settings.automaticMode = True
+                        shoot = True
+                    if event.key == pygame.K_q:
+                        if start_game == True:
+                            
+                            grenade = True
+                    if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP:
+                        player.jump = True
+                        jump_fx.play()
+                    if event.key == pygame.K_ESCAPE:
+                        run = False
+                    if event.key == pygame.K_v and settings.firingModesOn:
+                        changeFiringModes.getCurrentFiringMode()
 
 
-        #keyboard button released
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                moving_left = False
-            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                moving_right = False
-            if event.key == pygame.K_f:
-                shoot = False
-                settings.automaticMode = False
-            if event.key == pygame.K_q:
-                grenade = False
-                grenade_thrown = False
+            #keyboard button released
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    moving_left = False
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    moving_right = False
+                if event.key == pygame.K_f:
+                    shoot = False
+                    settings.automaticMode = False
+                if event.key == pygame.K_q:
+                    grenade = False
+                    grenade_thrown = False
 
 
     pygame.display.update()
-
-
-
-
-
 
 pygame.quit()
 exit()

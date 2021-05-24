@@ -1,7 +1,11 @@
-from main import *
 from settings import *
-import main as game
+from main import *
+import pygame
 
+
+
+run = True
+setup = False
 while run:
 
     clock.tick(FPS)
@@ -9,6 +13,11 @@ while run:
     if start_game == False:
         #draw menu
         screen.fill(BG)
+        screen.blit(logo, (100, 15))
+        draw_text("Controls", font2, WHITE, 20, 450)
+        draw_text("Movement: Arrow Keys or WASD", font3, WHITE, 20, 470)
+        draw_text("Fire Gun: F Key", font3, WHITE, 20, 490)
+        draw_text("Throw Grenade: Q Key", font3, WHITE, 20, 510)
         #add buttons
         a.optionsAchievementCheck()
         if achievementMenu == False:
@@ -44,11 +53,11 @@ while run:
         #show player health
         health_bar.draw(player.health)
         #show ammo
-        draw_text('AMMO: ', font, WHITE, 10, 35)
+        draw_text('AMMO: ', font2, WHITE, 10, 35)
         for x in range(player.ammo):
             screen.blit(bullet_img, (90 + (x * 10), 40))
         #show grenades
-        draw_text('GRENADES: ', font, WHITE, 10, 60)
+        draw_text('GRENADES: ', font2, WHITE, 10, 60)
         for x in range(player.grenades):
             screen.blit(grenade_img, (135 + (x * 15), 60))
 
@@ -66,25 +75,24 @@ while run:
         grenade_group.update()
         explosion_group.update()
         item_box_group.update()
-        game.decoration_group.update()
+        decoration_group.update()
         water_group.update()
         exit_group.update()
         bullet_group.draw(screen)
         grenade_group.draw(screen)
         explosion_group.draw(screen)
         item_box_group.draw(screen)
-        game.decoration_group.draw(screen)
+        decoration_group.draw(screen)
         water_group.draw(screen)
         exit_group.draw(screen)
 
         if settings.firingModesOn:
-            draw_text(settings.activeFiringMode, font, WHITE, 625, 10)
+            draw_text(settings.activeFiringMode, font2, WHITE, 625, 10)
 
         if not setup: ##level-specific one-time events
             settings.enemyCounter = len(enemy_group)
             settings.totalEnemyCounter += len(enemy_group)
             setup = True
-        
         #show intro
         if start_intro == True:
             if intro_fade.fade():
@@ -111,16 +119,11 @@ while run:
                 player.update_action(1)#1: run
             else:
                 player.update_action(0)#0: idle
-            settings.screen_scroll, level_complete = player.move(moving_left, moving_right)
-            bg_scroll -= settings.screen_scroll
-
-            #level_complete = True
-
-
+            screen_scroll, level_complete = player.move(moving_left, moving_right)
+            bg_scroll -= screen_scroll
 
             #check if player has completed the level
             if level_complete:
-                
                 if MAX_LEVELS == level:
                     settings.gameCompleted = True
                 if not settings.gameCompleted:
@@ -144,27 +147,40 @@ while run:
                     a.endLevelAchievementCheck()
 
                     screen.blit(endimg, (0,0))
-                    draw_text("Congratulations!", font4, WHITE, 250, 50)
+                    draw_text("Congratulations!", font4, WHITE, 235, 50)
 
                     if settings.timerStarted and settings.endTime == 0:
                         settings.timerStarted = False
                         settings.endTime = time.time()
+                        unalteredScore = settings.score
                         settings.score += player.health * 5
                         settings.score += player.ammo * 2
                         settings.score += player.grenades * 30
                     
                     settings.timeCompleted = settings.endTime - settings.startTime
-                    draw_text("You completed the game in", font, WHITE, 265, 100)
-                    draw_text(str(round(settings.timeCompleted, 2)) + " seconds", font4, WHITE, 285, 130)
-                    draw_text("with a total score of", font, WHITE, 290, 200)
-                    draw_text(str(settings.score) + " points", font4, WHITE, 300, 250)
-                    draw_text(f"with +{player.health * 5}pts from your leftover health, +{player.ammo * 2}pts from your leftover ammo and +{player.grenades * 30}pts from your leftover grenades", font2, WHITE, 100, 300)
-        
+                    draw_text("You completed the game in", font, WHITE, 240, 120)
+                    draw_text(str(round(settings.timeCompleted, 2)) + " seconds", font4, WHITE, 275, 160)
+                    draw_text("with a total score of", font, WHITE, 290, 250)
+                    draw_text(str(settings.score) + " points", font4, WHITE, 300, 290)
+                    score_text = f"+{unalteredScore} normal points scored"
+                    score_text1 = f"+{player.health * 5}pts bonus from your leftover health"
+                    score_text2 = f"+{player.ammo * 2}pts bonus from your leftover ammo"
+                    score_text3 = f"+{player.grenades * 30}pts bonus from your leftover grenades"
+                    draw_text(score_text, font2, WHITE, 280, 360)
+                    draw_text(score_text1, font2, WHITE, 280, 380)
+                    draw_text(score_text2, font2, WHITE, 280, 400)
+                    draw_text(score_text3, font2, WHITE, 280, 420)
+                    print(level_complete, start_intro)
+                    if restart_button_endscreen.draw(screen):
+                        level_complete = False
+                        print("heaps pranked gottem yeet")
+                        start_intro = False
+                        start_game = False
         
         
         
         else:
-            settings.screen_scroll = 0
+            screen_scroll = 0
             if death_fade.fade():
 
                 if restart_button.draw(screen):
