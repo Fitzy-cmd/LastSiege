@@ -547,6 +547,7 @@ class Bullet(pygame.sprite.Sprite):
                     enemy.health -= 25
                     settings.score += 10
                     settings.shotsHit += 1
+                    settings.enemiesDamagedByGrenades = 999999
                     if enemy.health == 0:
                         settings.enemyCounter -= 1
                         settings.enemiesKilled += 1
@@ -772,7 +773,7 @@ class Achievements(pygame.sprite.Sprite):
             a.achievementGained(resourceful)
         if settings.shotsFired == settings.shotsHit: #Sniper achievement
             a.achievementGained(sniper)
-        if settings.enemiesDamagedByGrenades == settings.grenadesThrown: #Explosives Expert achievement
+        if (settings.enemiesDamagedByGrenades == settings.grenadesThrown) and player.grenades == 0: #Explosives Expert achievement
             a.achievementGained(explosivesexpert)
         if settings.roundsFinishedWithEmptyMagazine == settings.level: #Trigger Finger achievement
             a.achievementGained(triggerfinger)
@@ -806,7 +807,7 @@ exit_button = button.Button(SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 50, ex
 exit_button2 = button.Button(SCREEN_WIDTH // 2 + 110, SCREEN_HEIGHT // 2 + 190, exit_img, 1)
 restart_button = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50, restart_img, 2)
 achievements_button = button.Button(SCREEN_WIDTH // 2 - 215, SCREEN_HEIGHT // 2 + 250, achieve_img, 2)
-restart_button_endscreen = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 200, restart_img, 2)
+restart_button_endscreen = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 200, exit_img, 2)
 
 
 #create sprite groups
@@ -875,7 +876,7 @@ while run:
                 start_game = True
                 start_intro = True
             if exit_button2.draw(screen):
-                run = False
+                achievementMenu = False
 
     else:
         if not settings.timerStarted and settings.startTime == 0:
@@ -1015,15 +1016,7 @@ while run:
                     draw_text(score_text2, font2, WHITE, 280, 400)
                     draw_text(score_text3, font2, WHITE, 280, 420)
                     if restart_button_endscreen.draw(screen):
-                        print("restarting...")
-                        level_complete = False
-                        start_intro = False
-                        start_game = False
-                        settings.score = 0
-                        setup = False
-                        settings.timerStarted = False
-                        settings.gameCompleted = False
-                        settings.level = 1
+                        run = False
         
         
         
@@ -1046,7 +1039,7 @@ while run:
                                 world_data[x][y] = int(tile)
                     world = World()
                     settings.ammo = 20
-                    settings.grenades = 6
+                    settings.grenades = 9
                     settings.startTime = time.time()
                     player, health_bar = world.process_data(world_data)
 

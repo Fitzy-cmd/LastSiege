@@ -1,11 +1,11 @@
-Army Specialist:Complete the game:True
-Pacifist:Complete the game without firing a single bullet or throwing a single grenade:True
+Army Specialist:Complete the game:False
+Pacifist:Complete the game without firing a single bullet or throwing a single grenade:False
 Assassin:Kill every enemy without taking damage on a single level:False
 Immortal:Complete the game without taking damage:False
 Resourceful:Pick up no item boxes:False
 Options, Options, Options:Achieve at least 50% of achievements to unlock different firing modes. Press V to change firing modes:False
 Trigger Finger: Complete each level with an empty magazine:False
-Explosives Expert:Use every grenade in the game to kill an enemy:True
-Sniper:Hit every shot:True
+Explosives Expert:Kill enemies using only grenades:False
+Sniper:Hit every shot:False
 Last Legs:Complete a level below 25 health, with no ammo and grenades left:False
 Path of Destruction:Kill every enemy in the game:False
