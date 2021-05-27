@@ -25,6 +25,7 @@ level = 1
 start_game = False
 start_intro = False
 achievementMenu = False
+controlsMenu = False
 gameCompleted = False
 firingModesOn = False
 firingModes = ['Semi', '3 Round Burst', 'Automatic']

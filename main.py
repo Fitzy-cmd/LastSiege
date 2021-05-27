@@ -29,6 +29,8 @@ start_img = pygame.image.load('img/start_btn.png').convert_alpha()
 exit_img = pygame.image.load('img/exit_btn.png').convert_alpha()
 restart_img = pygame.image.load('img/restart_btn.png').convert_alpha()
 achieve_img = pygame.image.load('img/achievement_button.png').convert_alpha()
+controls_img = pygame.image.load('img/controls.png').convert_alpha()
+back_img = pygame.image.load('img/back.png').convert_alpha()
 #background
 pine1_img = pygame.image.load('img/Background/pine1.png').convert_alpha()
 pine2_img = pygame.image.load('img/Background/pine2.png').convert_alpha()
@@ -804,10 +806,13 @@ death_fade = ScreenFade(2, PINK, 4)
 start_button = button.Button(SCREEN_WIDTH // 2 - 130, SCREEN_HEIGHT // 2 - 150, start_img, 1)
 start_button2 = button.Button(SCREEN_WIDTH // 2 + 110, SCREEN_HEIGHT // 2 + 70, start_img, 1)
 exit_button = button.Button(SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 50, exit_img, 1)
-exit_button2 = button.Button(SCREEN_WIDTH // 2 + 110, SCREEN_HEIGHT // 2 + 190, exit_img, 1)
+back_button2 = button.Button(SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 150, back_img, 1)
+back_button = button.Button(SCREEN_WIDTH // 2 + 110, SCREEN_HEIGHT // 2 + 190, back_img, 1)
 restart_button = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50, restart_img, 2)
 achievements_button = button.Button(SCREEN_WIDTH // 2 - 215, SCREEN_HEIGHT // 2 + 250, achieve_img, 2)
 restart_button_endscreen = button.Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 200, exit_img, 2)
+controls_button = button.Button(SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 - 40, controls_img, 2)
+
 
 
 #create sprite groups
@@ -850,22 +855,34 @@ while run:
         screen.fill(BG)
         #add buttons
         a.optionsAchievementCheck()
-        if achievementMenu == False:
+        if achievementMenu == False and controlsMenu == False:
             screen.blit(logo, (100, 15))
-            draw_text("Controls", font2, WHITE, 20, 450)
-            draw_text("Movement: Arrow Keys or WASD", font3, WHITE, 20, 470)
-            draw_text("Fire Gun: F Key", font3, WHITE, 20, 490)
-            draw_text("Throw Grenade: Q Key", font3, WHITE, 20, 510)
             settings.level = 1
             if start_button.draw(screen):
                 start_game = True
-                start_intro = True
-                
+                start_intro = True  
             if exit_button.draw(screen):
                 run = False
             if achievements_button.draw(screen):
                 achievementMenu = True
-        else:
+            if controls_button.draw(screen):
+                controlsMenu = True
+                print("Controls Button clicked")
+        elif controlsMenu == True:
+            screen.blit(logo, (100, 15))
+            draw_text("Movement Controls", font4, WHITE, 220, 150)
+            draw_text("Move Left: A or Left Arrow", font, WHITE, 250, 190)
+            draw_text("Move Right: D or Right Arrow", font, WHITE, 250, 220)
+            draw_text("Jump: Spacebar or Up Arrow", font, WHITE, 250, 250)
+
+            draw_text("Interaction Controls", font4, WHITE, 220, 300)
+            draw_text("Fire Gun: K", font, WHITE, 330, 340)
+            draw_text("Grenade: P", font, WHITE, 330, 370)
+            draw_text("Change Firing Mode: V - [Achievement Unlock]", font, WHITE, 170, 400)
+            if back_button2.draw(screen):
+                controlsMenu = False
+        
+        elif achievementMenu == True:
             a.draw()
             for event in pygame.event.get():
                 #quit game
@@ -875,7 +892,7 @@ while run:
             if start_button2.draw(screen):
                 start_game = True
                 start_intro = True
-            if exit_button2.draw(screen):
+            if back_button.draw(screen):
                 achievementMenu = False
 
     else:
@@ -1056,21 +1073,18 @@ while run:
                         moving_left = True
                     if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                         moving_right = True
-                    if event.key == pygame.K_f:
+                    if event.key == pygame.K_k:
                         if start_game == True: #done to make sure that no keys pressed before game starts account towards firing shots, as well as preventing shots fired from enemies counting towards this variable
                             settings.shotsFired += 1
                             if settings.activeFiringMode == "Automatic":
                                 settings.automaticMode = True
                         shoot = True
-                    if event.key == pygame.K_q:
+                    if event.key == pygame.K_p:
                         if start_game == True:
-                            
                             grenade = True
-                    if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP:
+                    if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP or event.key == pygame.K_SPACE:
                         player.jump = True
                         jump_fx.play()
-                    if event.key == pygame.K_ESCAPE:
-                        run = False
                     if event.key == pygame.K_v and settings.firingModesOn:
                         changeFiringModes.getCurrentFiringMode()
 
@@ -1081,10 +1095,10 @@ while run:
                     moving_left = False
                 if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                     moving_right = False
-                if event.key == pygame.K_f:
+                if event.key == pygame.K_k:
                     shoot = False
                     settings.automaticMode = False
-                if event.key == pygame.K_q:
+                if event.key == pygame.K_p:
                     grenade = False
                     grenade_thrown = False
 
