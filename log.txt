@@ -1,8 +1,0 @@
-15/5/2021
-Implemented some achievements
-
-14/05/2021
-Created basic framework for achievement loading and displaying
-
-13/05/2021
-Created achievements
