@@ -1,14 +1,16 @@
 import pygame
+from pygame.locals import *
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = int(SCREEN_WIDTH * 0.8)
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), DOUBLEBUF, 16)
 pygame.display.set_caption('Shooter')
+pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])
 
 #set framerate
 clock = pygame.time.Clock()
-FPS_OPTIONS = [30,60,100,144,165]
+FPS_OPTIONS = [30,45,60,100,144,165]
 FPS = FPS_OPTIONS[0]
 
 #define game variables
@@ -17,15 +19,14 @@ SCROLL_THRESH = 200
 ROWS = 16
 COLS = 150
 TILE_SIZE = SCREEN_HEIGHT // ROWS
-TILE_TYPES = 21
-MAX_LEVELS = 2
+TILE_TYPES = 23
+MAX_LEVELS = 4
 screen_scroll = 0
 bg_scroll = 0
 level = 1
 start_game = False
 start_intro = False
 achievementMenu = False
-controlsMenu = False
 gameCompleted = False
 firingModesOn = False
 firingModes = ['Semi', '3 Round Burst', 'Automatic']

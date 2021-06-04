@@ -10,6 +10,7 @@ import threading
 import time
 import math
 
+pygame.mixer.pre_init(44100, 16, 2, 4096) #sound optimisation
 mixer.init()
 pygame.init()
 
@@ -31,17 +32,22 @@ restart_img = pygame.image.load('img/restart_btn.png').convert_alpha()
 achieve_img = pygame.image.load('img/achievement_button.png').convert_alpha()
 controls_img = pygame.image.load('img/controls.png').convert_alpha()
 back_img = pygame.image.load('img/back.png').convert_alpha()
+
 #background
-pine1_img = pygame.image.load('img/Background/pine1.png').convert_alpha()
-pine2_img = pygame.image.load('img/Background/pine2.png').convert_alpha()
-mountain_img = pygame.image.load('img/Background/mountain.png').convert_alpha()
-sky_img = pygame.image.load('img/Background/sky_cloud.png').convert_alpha()
+pine1_img = None
+pine2_img = None
+mountain_img = None
+sky_img = None
+
 #store tiles in a list
 img_list = []
 for x in range(TILE_TYPES):
-    img = pygame.image.load(f'img/Tile/{x}.png')
-    img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
-    img_list.append(img)
+    try:
+        img = pygame.image.load(f'img/Tile/{x}.png')
+        img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+        img_list.append(img)
+    except:
+        print("no tile")
 #bullet
 bullet_img = pygame.image.load('img/icons/bullet.png').convert_alpha()
 #grenade
@@ -78,6 +84,14 @@ def draw_text(text, font, text_col, x, y):
     global screen
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
+
+def loadBackgrounds():
+    global pine1_img, pine2_img, mountain_img, sky_img
+    #background
+    pine1_img = pygame.image.load(f'img/Background/{settings.level}/pine1.png').convert_alpha()
+    pine2_img = pygame.image.load(f'img/Background/{settings.level}/pine2.png').convert_alpha()
+    mountain_img = pygame.image.load(f'img/Background/{settings.level}/mountain.png').convert_alpha()
+    sky_img = pygame.image.load(f'img/Background/{settings.level}/sky_cloud.png').convert_alpha()
 
 def draw_bg():
     screen.fill(BG)
@@ -166,51 +180,41 @@ class Player(pygame.sprite.Sprite):
         
         #reset movement variables
         screen_scroll = 0
-        dx = 0
-        dy = 0
+        self.dx = 0
+        self.dy = 0
 
         #assign movement variables if moving left or right
         if moving_left:
-            dx = -self.speed
+            self.dx = -self.speed
             self.flip = True
             self.direction = -1
         if moving_right:
-            dx = self.speed
+            self.dx = self.speed
             self.flip = False
             self.direction = 1
 
-        #jump
-        if self.jump == True and self.in_air == False:
-            self.vel_y = -11
-            self.jump = False
-            self.in_air = True
-
-        #apply gravity
-        self.vel_y += GRAVITY
-        if self.vel_y > 10:
-            self.vel_y
-        dy += self.vel_y
+        threading.Thread(target = self.gravUpdate, daemon = True).start()
 
         #check for collision
         for tile in world.obstacle_list:
             #check collision in the x direction
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0
+            if tile[1].colliderect(self.rect.x + self.dx, self.rect.y, self.width, self.height):
+                self.dx = 0
                 #if the ai has hit a wall then make it turn around
                 if self.char_type == 'enemy':
                     self.direction *= -1
                     self.move_counter = 0
             #check for collision in the y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+            if tile[1].colliderect(self.rect.x, self.rect.y + self.dy, self.width, self.height):
                 #check if below the ground, i.e. jumping
                 if self.vel_y < 0:
                     self.vel_y = 0
-                    dy = tile[1].bottom - self.rect.top
+                    self.dy = tile[1].bottom - self.rect.top
                 #check if above the ground, i.e. falling
                 elif self.vel_y >= 0:
                     self.vel_y = 0
                     self.in_air = False
-                    dy = tile[1].top - self.rect.bottom
+                    self.dy = tile[1].top - self.rect.bottom
 
 
         #check for collision with water
@@ -229,21 +233,34 @@ class Player(pygame.sprite.Sprite):
 
         #check if going off the edges of the screen
         if self.char_type == 'player':
-            if self.rect.left + dx < 0 or self.rect.right + dx > SCREEN_WIDTH:
-                dx = 0
+            if self.rect.left + self.dx < 0 or self.rect.right + self.dx > SCREEN_WIDTH:
+                self.dx = 0
 
         #update rectangle position
-        self.rect.x += dx
-        self.rect.y += dy
+        self.rect.x += self.dx
+        self.rect.y += self.dy
 
         #update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > SCREEN_WIDTH - SCROLL_THRESH and bg_scroll < (world.level_length * TILE_SIZE) - SCREEN_WIDTH)\
-                or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
-                self.rect.x -= dx
-                screen_scroll = -dx
+                or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(self.dx)):
+                self.rect.x -= self.dx
+                screen_scroll = -self.dx
 
         return screen_scroll, level_complete
+    
+    def gravUpdate(self):
+        #jump
+        if self.jump == True and self.in_air == False:
+            self.vel_y = -11
+            self.jump = False
+            self.in_air = True
+
+        #apply gravity
+        self.vel_y += GRAVITY
+        if self.vel_y > 10:
+            self.vel_y
+        self.dy += self.vel_y
 
     def shoot(self, firingMode):
         if firingMode == "Semi":
@@ -573,31 +590,31 @@ class Grenade(pygame.sprite.Sprite):
     def update(self):
         
         self.vel_y += GRAVITY
-        dx = self.direction * self.speed
-        dy = self.vel_y
+        self.dx = self.direction * self.speed
+        self.dy = self.vel_y
 
         #check for collision with level
         for tile in world.obstacle_list:
             #check collision with walls
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+            if tile[1].colliderect(self.rect.x + self.dx, self.rect.y, self.width, self.height):
                 self.direction *= -1
-                dx = self.direction * self.speed
+                self.dx = self.direction * self.speed
             #check for collision in the y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+            if tile[1].colliderect(self.rect.x, self.rect.y + self.dy, self.width, self.height):
                 self.speed = 0
                 #check if below the ground, i.e. thrown up
                 if self.vel_y < 0:
                     self.vel_y = 0
-                    dy = tile[1].bottom - self.rect.top
+                    self.dy = tile[1].bottom - self.rect.top
                 #check if above the ground, i.e. falling
                 elif self.vel_y >= 0:
                     self.vel_y = 0
-                    dy = tile[1].top - self.rect.bottom	
+                    self.dy = tile[1].top - self.rect.bottom	
 
 
         #update grenade position
-        self.rect.x += dx + screen_scroll
-        self.rect.y += dy
+        self.rect.x += self.dx + screen_scroll
+        self.rect.y += self.dy
 
         #countdown timer
         self.timer -= 1
@@ -834,7 +851,7 @@ for row in range(ROWS):
     world_data.append(r)
     
 #load in settings.leveldata and create world
-with open(f'level{settings.level}_data.csv', newline='') as csvfile:
+with open(f'levels/level{settings.level}_data.csv', newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
     for x, row in enumerate(reader):
         for y, tile in enumerate(row):
@@ -846,6 +863,7 @@ a = Achievements()
 
 run = True
 setup = False
+controlsMenu = False
 while run:
 
     clock.tick(FPS)
@@ -867,18 +885,29 @@ while run:
                 achievementMenu = True
             if controls_button.draw(screen):
                 controlsMenu = True
-                print("Controls Button clicked")
         elif controlsMenu == True:
             screen.blit(logo, (100, 15))
-            draw_text("Movement Controls", font4, WHITE, 220, 150)
-            draw_text("Move Left: A or Left Arrow", font, WHITE, 250, 190)
-            draw_text("Move Right: D or Right Arrow", font, WHITE, 250, 220)
-            draw_text("Jump: Spacebar or Up Arrow", font, WHITE, 250, 250)
+            ##Windows Settings
+            #draw_text("Movement Controls", font4, WHITE, 220, 150)
+            #draw_text("Move Left: A or Left Arrow", font, WHITE, 250, 190)
+            #draw_text("Move Right: D or Right Arrow", font, WHITE, 250, 220)
+            #draw_text("Jump: Spacebar or Up Arrow", font, WHITE, 250, 250)
 
-            draw_text("Interaction Controls", font4, WHITE, 220, 300)
-            draw_text("Fire Gun: K", font, WHITE, 330, 340)
-            draw_text("Grenade: P", font, WHITE, 330, 370)
-            draw_text("Change Firing Mode: V - [Achievement Unlock]", font, WHITE, 170, 400)
+            #draw_text("Interaction Controls", font4, WHITE, 220, 300)
+            #draw_text("Fire Gun: K", font, WHITE, 330, 340)
+            #draw_text("Grenade: P", font, WHITE, 330, 370)
+            #draw_text("Change Firing Mode: V - [Achievement Unlock]", font, WHITE, 170, 400)
+
+            ##Mac Settings
+            draw_text("Movement Controls", font, WHITE, 250, 150)
+            draw_text("Move Left: A or Left Arrow", font2, WHITE, 250, 190)
+            draw_text("Move Right: D or Right Arrow", font2, WHITE, 250, 220)
+            draw_text("Jump: Spacebar or Up Arrow", font2, WHITE, 250, 250)
+
+            draw_text("Interaction Controls", font, WHITE, 250, 300)
+            draw_text("Fire Gun: K", font2, WHITE, 330, 340)
+            draw_text("Grenade: P", font2, WHITE, 330, 370)
+            draw_text("Change Firing Mode: V - [Achievement Unlock]", font2, WHITE, 200, 400)
             if back_button2.draw(screen):
                 controlsMenu = False
         
@@ -902,6 +931,7 @@ while run:
             settings.ammo = player.ammo
             settings.grenades = player.grenades
             settings.level = 1
+            loadBackgrounds()
         #update background
         draw_bg()
         #draw world map
@@ -909,13 +939,15 @@ while run:
         #show player health
         health_bar.draw(player.health)
         #show ammo
-        draw_text('AMMO: ', font2, WHITE, 10, 35)
+        draw_text(f'AMMO: {player.ammo}', font2, WHITE, 10, 35)
         for x in range(player.ammo):
-            screen.blit(bullet_img, (90 + (x * 10), 40))
+            break
+            #screen.blit(bullet_img, (90 + (x * 10), 40))
         #show grenades
-        draw_text('GRENADES: ', font2, WHITE, 10, 60)
+        draw_text(f'GRENADES: {player.grenades}', font2, WHITE, 10, 60)
         for x in range(player.grenades):
-            screen.blit(grenade_img, (135 + (x * 15), 60))
+            break
+            #screen.blit(grenade_img, (135 + (x * 15), 60))
 
 
         player.update()
@@ -923,8 +955,14 @@ while run:
 
         for enemy in enemy_group:
             enemy.ai()
-            enemy.update()
-            enemy.draw()
+            if (enemy.rect.x <= -64) or (enemy.rect.x >= 864): ##If enemy is outside of screen
+                pass ##Enemy is off screen
+            else:
+                enemy.update()
+            enemy.draw()   
+            if (enemy.alive == False) and (enemy.rect.x <= -64): ##Removes the enemies from the list, so when dead enemies leave the screen, they are no longer rendered
+                enemy_group.remove(enemy)
+               
             
 
         #update and draw groups
@@ -935,13 +973,14 @@ while run:
         decoration_group.update()
         water_group.update()
         exit_group.update()
-        bullet_group.draw(screen)
-        grenade_group.draw(screen)
-        explosion_group.draw(screen)
-        item_box_group.draw(screen)
-        decoration_group.draw(screen)
-        water_group.draw(screen)
-        exit_group.draw(screen)
+
+        threading.Thread(target = bullet_group.draw(screen), daemon = True).start()
+        threading.Thread(target = grenade_group.draw(screen), daemon = True).start()
+        threading.Thread(target = explosion_group.draw(screen), daemon = True).start()
+        threading.Thread(target = item_box_group.draw(screen), daemon = True).start()
+        threading.Thread(target = decoration_group.draw(screen), daemon = True).start()
+        threading.Thread(target = water_group.draw(screen), daemon = True).start()
+        threading.Thread(target = exit_group.draw(screen), daemon = True).start()
 
         if settings.firingModesOn:
             draw_text(settings.activeFiringMode, font2, WHITE, 625, 10)
@@ -961,7 +1000,7 @@ while run:
         if player.alive:
             #shoot bullets
             if shoot:
-                player.shoot(settings.activeFiringMode)
+                threading.Thread(target = player.shoot(settings.activeFiringMode)).start()
             #throw grenade
             elif grenade and grenade_thrown == False and player.grenades > 0:
                 grenade = Grenade(player.rect.centerx + (0.5 * player.rect.size[0] * player.direction),\
@@ -989,14 +1028,25 @@ while run:
                 if not settings.gameCompleted:
                     a.endLevelAchievementCheck()
                     start_intro = True
+                    
+                    #empty groups
+                    enemy_group.empty()
+                    bullet_group.empty()
+                    grenade_group.empty()
+                    explosion_group.empty()
+                    item_box_group.empty()
+                    decoration_group.empty()
+                    water_group.empty()
+                    exit_group.empty()
+
                     setup = False
                     settings.level += 1
-                    print(settings.level)
+                    loadBackgrounds()
                     bg_scroll = 0
                     world_data = reset_level()
                     if settings.level <= settings.MAX_LEVELS:
                         #load in settings.leveldata and create world
-                        with open(f'level{settings.level}_data.csv', newline='') as csvfile:
+                        with open(f'levels/level{settings.level}_data.csv', newline='') as csvfile:
                             reader = csv.reader(csvfile, delimiter=',')
                             for x, row in enumerate(reader):
                                 for y, tile in enumerate(row):
@@ -1049,7 +1099,7 @@ while run:
                     settings.level = 1
                     world_data = reset_level()
                     #load in settings.leveldata and create world
-                    with open(f'level1_data.csv', newline='') as csvfile:
+                    with open(f'levels/level1_data.csv', newline='') as csvfile:
                         reader = csv.reader(csvfile, delimiter=',')
                         for x, row in enumerate(reader):
                             for y, tile in enumerate(row):

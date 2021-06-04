@@ -12,9 +12,15 @@ Last Siege is a side-scrolling shooter in the style of the classic 80s and 90s a
 - V - Switch firing modes (Alters between Semi [1 bullet], Burst [3 bullets] or Automatic [Constant])
 
 ## Latest Update
-- Added achievements
-- Added an end screen
-- Added game stats, such as time to complete and points
+- Added heavy optimisations
+- Added day cycles to levels
+- Added 2 new levels
+- Added new tiles
+- Added a dedicated controls menu so they are easier to find
+- Changed individual ammo and grenade blitting to just numbers. This improves performance and a better indicator of ammo count when the player gets a lot of ammo
+- Enemy AI does not work if they are off screen
+- Dead enemies now disappear when they go off screen
+- Gravity Physics and screen-blitting is performed with seperate threads.
 
 ## User Feedback
 ### User Feedback 1
