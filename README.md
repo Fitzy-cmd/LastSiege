@@ -13,7 +13,7 @@ Last Siege is a side-scrolling shooter in the style of the classic 80s and 90s a
 
 ## Latest Update
 - Added heavy optimisations
-- Added day cycles to levels
+- Added day-night cycles to levels
 - Added 2 new levels
 - Added new tiles
 - Added a dedicated controls menu so they are easier to find
@@ -21,6 +21,14 @@ Last Siege is a side-scrolling shooter in the style of the classic 80s and 90s a
 - Enemy AI does not work if they are off screen
 - Dead enemies now disappear when they go off screen
 - Gravity Physics and screen-blitting is performed with seperate threads.
+
+## Latest Hotfix
+- Fixed bug where player's current health becomes the new maximum health on level change
+- Fixed bug where health, ammo and grenades would not transition over into new levels
+- Fixed a bug where player could get double health from health-box
+- Fixed a bug where player could get double health on level change
+- Added a testing framework for testing purposes only
+    - _Currently only has a debugging tool, but will be updated in the future with more options_
 
 ## User Feedback
 ### User Feedback 1

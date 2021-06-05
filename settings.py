@@ -41,6 +41,8 @@ endTime = 0
 score = 0
 ammo = 20
 grenades = 9
+playerPreviousHealth = 100
+maxHealth = 100
 
 
 #define player action variables

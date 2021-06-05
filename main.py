@@ -132,8 +132,8 @@ class Player(pygame.sprite.Sprite):
         self.start_ammo = ammo
         self.shoot_cooldown = 0
         self.grenades = grenades
-        self.health = 100
-        self.max_health = self.health
+        self.health = settings.playerPreviousHealth
+        self.max_health = settings.maxHealth
         self.direction = 1
         self.vel_y = 0
         self.jump = False
@@ -270,6 +270,7 @@ class Player(pygame.sprite.Sprite):
                 bullet_group.add(bullet)
                 #reduce ammo
                 self.ammo -= 1
+                settings.ammo = player.ammo
                 shot_fx.play()
         elif firingMode == "3 Round Burst":
             t = threading.Thread(target = player.burst)
@@ -291,7 +292,7 @@ class Player(pygame.sprite.Sprite):
             bullet_group.add(bullet)
             #reduce ammo
             self.ammo -= 1
-            settings.ammo -= 1
+            settings.ammo = player.ammo
             shot_fx.play()
 
             pygame.time.wait(100)
@@ -300,7 +301,7 @@ class Player(pygame.sprite.Sprite):
                 bullet_group.add(bullet)
                 #reduce ammo
                 self.ammo -= 1
-                settings.ammo -= 1
+                settings.ammo = player.ammo
                 shot_fx.play()
 
             pygame.time.wait(100)
@@ -309,7 +310,7 @@ class Player(pygame.sprite.Sprite):
                 bullet_group.add(bullet)
                 #reduce ammo
                 self.ammo -= 1
-                settings.ammo -= 1
+                settings.ammo = player.ammo
                 shot_fx.play()
 
     def auto(self):
@@ -319,7 +320,7 @@ class Player(pygame.sprite.Sprite):
             bullet_group.add(bullet)
             #reduce ammo
             self.ammo -= 1
-            settings.ammo -= 1
+            settings.ammo = player.ammo
             shot_fx.play()
 
     def ai(self):
@@ -423,7 +424,7 @@ class World():
                         decoration_group.add(decoration)
                     elif tile == 15:#create player
                         player = Player('player', x * TILE_SIZE, y * TILE_SIZE, 1.65, 5, settings.ammo, settings.grenades)
-                        health_bar = HealthBar(10, 10, player.health, player.health)
+                        health_bar = HealthBar(10, 10, settings.playerPreviousHealth, player.max_health)
                     elif tile == 16:#create enemies
                         enemy = Player('enemy', x * TILE_SIZE, y * TILE_SIZE, 1.65, 2, 20, 0)
                         enemy_group.add(enemy)
@@ -501,8 +502,10 @@ class ItemBox(pygame.sprite.Sprite):
             #check what kind of box it was
             if self.item_type == 'Health':
                 player.health += 25
+                settings.playerPreviousHealth += 25
                 if player.health > player.max_health:
                     player.health = player.max_health
+                    settings.playerPreviousHealth = player.max_health
                     settings.itemBoxesGained += 1
             elif self.item_type == 'Ammo':
                 player.ammo += 15
@@ -558,6 +561,7 @@ class Bullet(pygame.sprite.Sprite):
         if pygame.sprite.spritecollide(player, bullet_group, False):
             if player.alive:
                 player.health -= 5
+                settings.playerPreviousHealth -= 5
                 settings.damageTaken -= 5
                 self.kill()
         for enemy in enemy_group:
@@ -627,6 +631,7 @@ class Grenade(pygame.sprite.Sprite):
             if abs(self.rect.centerx - player.rect.centerx) < TILE_SIZE * 2 and \
                 abs(self.rect.centery - player.rect.centery) < TILE_SIZE * 2:
                 player.health -= 50
+                settings.playerPreviousHealth -= 50
                 settings.damageTaken -= 50
             for enemy in enemy_group:
                 if abs(self.rect.centerx - enemy.rect.centerx) < TILE_SIZE * 2 and \
@@ -814,6 +819,14 @@ class changeFiringModes():
     def changeFiringMode():
         settings.activeFiringMode = settings.firingModes[settings.firingModeCounter]
 
+class testingFramework():
+    def debugger(debuggerInfo, *args):
+        os.system("cls")
+        print(debuggerInfo)
+        for i in args:
+            print(i)
+
+
 #create screen fades
 intro_fade = ScreenFade(1, BLACK, 4)
 death_fade = ScreenFade(2, PINK, 4)
@@ -888,26 +901,26 @@ while run:
         elif controlsMenu == True:
             screen.blit(logo, (100, 15))
             ##Windows Settings
-            #draw_text("Movement Controls", font4, WHITE, 220, 150)
-            #draw_text("Move Left: A or Left Arrow", font, WHITE, 250, 190)
-            #draw_text("Move Right: D or Right Arrow", font, WHITE, 250, 220)
-            #draw_text("Jump: Spacebar or Up Arrow", font, WHITE, 250, 250)
+            draw_text("Movement Controls", font4, WHITE, 220, 150)
+            draw_text("Move Left: A or Left Arrow", font, WHITE, 250, 190)
+            draw_text("Move Right: D or Right Arrow", font, WHITE, 250, 220)
+            draw_text("Jump: Spacebar or Up Arrow", font, WHITE, 250, 250)
 
-            #draw_text("Interaction Controls", font4, WHITE, 220, 300)
-            #draw_text("Fire Gun: K", font, WHITE, 330, 340)
-            #draw_text("Grenade: P", font, WHITE, 330, 370)
-            #draw_text("Change Firing Mode: V - [Achievement Unlock]", font, WHITE, 170, 400)
+            draw_text("Interaction Controls", font4, WHITE, 220, 300)
+            draw_text("Fire Gun: K", font, WHITE, 330, 340)
+            draw_text("Grenade: P", font, WHITE, 330, 370)
+            draw_text("Change Firing Mode: V - [Achievement Unlock]", font, WHITE, 170, 400)
 
             ##Mac Settings
-            draw_text("Movement Controls", font, WHITE, 250, 150)
-            draw_text("Move Left: A or Left Arrow", font2, WHITE, 250, 190)
-            draw_text("Move Right: D or Right Arrow", font2, WHITE, 250, 220)
-            draw_text("Jump: Spacebar or Up Arrow", font2, WHITE, 250, 250)
+            #draw_text("Movement Controls", font, WHITE, 250, 150)
+            #draw_text("Move Left: A or Left Arrow", font2, WHITE, 250, 190)
+            #draw_text("Move Right: D or Right Arrow", font2, WHITE, 250, 220)
+            #draw_text("Jump: Spacebar or Up Arrow", font2, WHITE, 250, 250)
 
-            draw_text("Interaction Controls", font, WHITE, 250, 300)
-            draw_text("Fire Gun: K", font2, WHITE, 330, 340)
-            draw_text("Grenade: P", font2, WHITE, 330, 370)
-            draw_text("Change Firing Mode: V - [Achievement Unlock]", font2, WHITE, 200, 400)
+            #draw_text("Interaction Controls", font, WHITE, 250, 300)
+            #draw_text("Fire Gun: K", font2, WHITE, 330, 340)
+            #draw_text("Grenade: P", font2, WHITE, 330, 370)
+            #draw_text("Change Firing Mode: V - [Achievement Unlock]", font2, WHITE, 200, 400)
             if back_button2.draw(screen):
                 controlsMenu = False
         
@@ -973,6 +986,8 @@ while run:
         decoration_group.update()
         water_group.update()
         exit_group.update()
+
+        threading.Thread(target = testingFramework.debugger("Player Stats:", player.health, settings.playerPreviousHealth, player.grenades, settings.grenades, player.ammo, settings.ammo)).start()
 
         threading.Thread(target = bullet_group.draw(screen), daemon = True).start()
         threading.Thread(target = grenade_group.draw(screen), daemon = True).start()
@@ -1098,6 +1113,7 @@ while run:
                     bg_scroll = 0
                     settings.level = 1
                     world_data = reset_level()
+                    loadBackgrounds()
                     #load in settings.leveldata and create world
                     with open(f'levels/level1_data.csv', newline='') as csvfile:
                         reader = csv.reader(csvfile, delimiter=',')
@@ -1108,6 +1124,7 @@ while run:
                     settings.ammo = 20
                     settings.grenades = 9
                     settings.startTime = time.time()
+                    settings.playerPreviousHealth = 100
                     player, health_bar = world.process_data(world_data)
 
 
@@ -1135,8 +1152,9 @@ while run:
                     if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP or event.key == pygame.K_SPACE:
                         player.jump = True
                         jump_fx.play()
-                    if event.key == pygame.K_v and settings.firingModesOn:
-                        changeFiringModes.getCurrentFiringMode()
+                    if event.key == pygame.K_v:
+                        if settings.firingModesOn:
+                            changeFiringModes.getCurrentFiringMode()
 
 
             #keyboard button released
