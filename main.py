@@ -94,6 +94,7 @@ def loadBackgrounds():
     sky_img = pygame.image.load(f'img/Background/{settings.level}/sky_cloud.png').convert_alpha()
 
 def draw_bg():
+    global screen
     screen.fill(BG)
     width = sky_img.get_width()
     for x in range(5):
@@ -444,7 +445,7 @@ class World():
         return player, health_bar
 
 
-    def draw(self):
+    def draw(self, screen):
         
         for tile in self.obstacle_list:
             tile[1][0] += screen_scroll
@@ -874,14 +875,20 @@ player, health_bar = world.process_data(world_data)
 
 a = Achievements()
 
-run = True
+settings.run = True
 setup = False
 controlsMenu = False
-while run:
 
-    clock.tick(FPS)
+class mainGame():
+    def mainMenu1():
+        global screen
 
-    if start_game == False:
+        screen.fill(WHITE)
+
+        
+        pygame.display.update()
+    def mainMenu():
+        global screen, achievementMenu, controlsMenu, start_button
         #draw menu
         screen.fill(BG)
         #add buttons
@@ -890,10 +897,10 @@ while run:
             screen.blit(logo, (100, 15))
             settings.level = 1
             if start_button.draw(screen):
-                start_game = True
-                start_intro = True  
+                settings.start_game = True
+                settings.start_intro = True
             if exit_button.draw(screen):
-                run = False
+                settings.run = False
             if achievements_button.draw(screen):
                 achievementMenu = True
             if controls_button.draw(screen):
@@ -932,12 +939,19 @@ while run:
                     pygame.quit()
                     exit()
             if start_button2.draw(screen):
-                start_game = True
-                start_intro = True
+                settings.start_game = True
+                settings.start_intro = True
             if back_button.draw(screen):
                 achievementMenu = False
 
-    else:
+        for event in pygame.event.get():
+            #quit game
+            if event.type == pygame.QUIT:
+                settings.run = False
+        pygame.display.update()
+
+    def gameRun():
+        global world, health_bar, player, setup, grenade, grenade_thrown, bg_scroll, screen, screen_scroll
         if not settings.timerStarted and settings.startTime == 0:
             settings.startTime = time.time()
             settings.timerStarted = True
@@ -945,10 +959,12 @@ while run:
             settings.grenades = player.grenades
             settings.level = 1
             loadBackgrounds()
+        screen.fill(WHITE)
+        print('playing game')
         #update background
         draw_bg()
         #draw world map
-        world.draw()
+        world.draw(screen)
         #show player health
         health_bar.draw(player.health)
         #show ammo
@@ -987,7 +1003,7 @@ while run:
         water_group.update()
         exit_group.update()
 
-        threading.Thread(target = testingFramework.debugger("Player Stats:", player.health, settings.playerPreviousHealth, player.grenades, settings.grenades, player.ammo, settings.ammo)).start()
+        #threading.Thread(target = testingFramework.debugger("Player Stats:", player.health, settings.playerPreviousHealth, player.grenades, settings.grenades, player.ammo, settings.ammo)).start()
 
         threading.Thread(target = bullet_group.draw(screen), daemon = True).start()
         threading.Thread(target = grenade_group.draw(screen), daemon = True).start()
@@ -1005,16 +1021,16 @@ while run:
             settings.totalEnemyCounter += len(enemy_group)
             setup = True
         #show intro
-        if start_intro == True:
+        if settings.start_intro == True:
             if intro_fade.fade():
-                start_intro = False
+                settings.start_intro = False
                 intro_fade.fade_counter = 0
 
 
         #update player actions
         if player.alive:
             #shoot bullets
-            if shoot:
+            if settings.shoot:
                 threading.Thread(target = player.shoot(settings.activeFiringMode)).start()
             #throw grenade
             elif grenade and grenade_thrown == False and player.grenades > 0:
@@ -1028,11 +1044,11 @@ while run:
                 grenade_thrown = True
             if player.in_air:
                 player.update_action(2)#2: jump
-            elif moving_left or moving_right:
+            elif settings.moving_left or settings.moving_right:
                 player.update_action(1)#1: run
             else:
                 player.update_action(0)#0: idle
-            screen_scroll, level_complete = player.move(moving_left, moving_right)
+            screen_scroll, level_complete = player.move(settings.moving_left, settings.moving_right)
             bg_scroll -= screen_scroll
 
 
@@ -1042,7 +1058,7 @@ while run:
                     settings.gameCompleted = True
                 if not settings.gameCompleted:
                     a.endLevelAchievementCheck()
-                    start_intro = True
+                    settings.start_intro = True
                     
                     #empty groups
                     enemy_group.empty()
@@ -1098,9 +1114,7 @@ while run:
                     draw_text(score_text2, font2, WHITE, 280, 400)
                     draw_text(score_text3, font2, WHITE, 280, 420)
                     if restart_button_endscreen.draw(screen):
-                        run = False
-        
-        
+                        settings.run = False
         
         else:
             screen_scroll = 0
@@ -1109,7 +1123,7 @@ while run:
                 if restart_button.draw(screen):
                     ##Reset game
                     death_fade.fade_counter = 0
-                    start_intro = True
+                    settings.start_intro = True
                     bg_scroll = 0
                     settings.level = 1
                     world_data = reset_level()
@@ -1127,51 +1141,49 @@ while run:
                     settings.playerPreviousHealth = 100
                     player, health_bar = world.process_data(world_data)
 
-
-    for event in pygame.event.get():
-        #quit game
-        if event.type == pygame.QUIT:
-            run = False
-        if not settings.gameCompleted:
-            #keyboard presses
-            if event.type == pygame.KEYDOWN:
-                if player.alive:
-                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                        moving_left = True
-                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                        moving_right = True
-                    if event.key == pygame.K_k:
-                        if start_game == True: #done to make sure that no keys pressed before game starts account towards firing shots, as well as preventing shots fired from enemies counting towards this variable
-                            settings.shotsFired += 1
-                            if settings.activeFiringMode == "Automatic":
-                                settings.automaticMode = True
-                        shoot = True
-                    if event.key == pygame.K_p:
-                        if start_game == True:
-                            grenade = True
-                    if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP or event.key == pygame.K_SPACE:
-                        player.jump = True
-                        jump_fx.play()
-                    if event.key == pygame.K_v:
-                        if settings.firingModesOn:
-                            changeFiringModes.getCurrentFiringMode()
-
-
-            #keyboard button released
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                    moving_left = False
-                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                    moving_right = False
-                if event.key == pygame.K_k:
-                    shoot = False
-                    settings.automaticMode = False
-                if event.key == pygame.K_p:
-                    grenade = False
-                    grenade_thrown = False
+        for event in pygame.event.get():
+                #quit game
+                if event.type == pygame.QUIT:
+                    settings.run = False
+                if not settings.gameCompleted:
+                    #keyboard presses
+                    if event.type == pygame.KEYDOWN:
+                        if player.alive:
+                            if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                                settings.moving_left = True
+                                print("left")
+                            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                                settings.moving_right = True
+                            if event.key == pygame.K_k:
+                                if settings.start_game == True: #done to make sure that no keys pressed before game starts account towards firing shots, as well as preventing shots fired from enemies counting towards this variable
+                                    settings.shotsFired += 1
+                                    if settings.activeFiringMode == "Automatic":
+                                        settings.automaticMode = True
+                                settings.shoot = True
+                            if event.key == pygame.K_p:
+                                if settings.start_game == True:
+                                    grenade = True
+                            if event.key == pygame.K_w and player.alive or event.key == pygame.K_UP or event.key == pygame.K_SPACE:
+                                player.jump = True
+                                jump_fx.play()
+                            if event.key == pygame.K_v:
+                                if settings.firingModesOn:
+                                    changeFiringModes.getCurrentFiringMode()
 
 
-    pygame.display.update()
+                    #keyboard button released
+                    if event.type == pygame.KEYUP:
+                        if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                            settings.moving_left = False
+                        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                            settings.moving_right = False
+                        if event.key == pygame.K_k:
+                            settings.shoot = False
+                            settings.automaticMode = False
+                        if event.key == pygame.K_p:
+                            grenade = False
+                            grenade_thrown = False
 
-pygame.quit()
-exit()
+
+        pygame.display.update()
+
