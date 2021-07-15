@@ -1,5 +1,5 @@
-Army Specialist:Complete the game:True
-Pacifist:Complete the game without firing a single bullet or throwing a single grenade:True
+Army Specialist:Complete the game:False
+Pacifist:Complete the game without firing a single bullet or throwing a single grenade:False
 Assassin:Kill every enemy without taking damage on a single level:False
 Immortal:Complete the game without taking damage:False
 Resourceful:Pick up no item boxes:False
